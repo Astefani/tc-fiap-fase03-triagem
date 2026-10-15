@@ -1,0 +1,19 @@
+[project]
+name = "tc-fiap-fase03-triagem"
+version = "0.1.0"
+description = "Classificação de textos médicos — Tech Challenge Fase 03 (Pós Tech ML Engineering, FIAP)"
+authors = [{ name = "Alessandro Stefani", email = "stefani.alessandro@gmail.com" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pandas (>=3.0.6,<4.0.0)",
+]
+
+# Ferramentas de desenvolvimento: ficam FORA da imagem Docker.
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^7.4.0"
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+

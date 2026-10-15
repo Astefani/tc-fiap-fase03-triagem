@@ -1,0 +1,48 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# --- Ambiente virtual (Poetry in-project) ---
+.venv/
+
+# --- Ferramentas / caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# --- MLflow ---
+mlruns/
+mlartifacts/
+mlflow-store/
+mlflow.db
+
+# --- Dados (são versionados pelo DVC) ---
+data/*
+!data/*.dvc
+!data/.gitignore
+
+# --- Modelos (podem ser recriados pelo pipeline) ---
+models/*
+!models/*.dvc
+
+# --- Airflow ---
+airflow/logs/
+
+# --- Sincronização Mac <-> Ubuntu via SyncThing (planejamento fora do Git) ---
+diversos/
+
+# --- Segredos / ambiente ---
+.env
+.env.*
+!.env.example
+
+# --- IDE / SO ---
+.vscode/
+.idea/
+.DS_Store
