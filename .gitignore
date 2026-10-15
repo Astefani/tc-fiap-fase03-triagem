@@ -23,13 +23,13 @@ mlflow-store/
 mlflow.db
 
 # --- Dados (são versionados pelo DVC) ---
-data/*
-!data/*.dvc
-!data/.gitignore
+data/raw/
+data/interim/
+data/processed/
 
 # --- Modelos (podem ser recriados pelo pipeline) ---
-models/*
-!models/*.dvc
+models/tfidf/
+models/bert/
 
 # --- Airflow ---
 airflow/logs/
