@@ -1,0 +1,11 @@
+#!/bin/sh
+# Grava o commit e o hash de src/ em diversos/versao-codigo.json (fora do Git, acompanha as cópias
+# do projeto). É assim que um treino numa cópia sem .git sabe de qual commit veio o código.
+# Ativação, uma vez por clone:  git config core.hooksPath scripts/hooks
+# Um post-commit não bloqueia o commit: se algo falhar aqui, o commit já está feito — só avisa.
+cd "$(git rev-parse --show-toplevel)" || exit 0
+if [ -x .venv/bin/python ]; then
+    .venv/bin/python -m triagem.versao gravar || echo "post-commit: falha ao gravar a versão do código" >&2
+else
+    echo "post-commit: .venv não encontrado; versão do código não gravada" >&2
+fi
