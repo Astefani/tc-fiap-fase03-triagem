@@ -30,6 +30,7 @@ data/processed/
 # --- Modelos (podem ser recriados pelo pipeline) ---
 models/tfidf/
 models/bert/
+models/bert-trabalho/
 
 # --- Airflow ---
 airflow/logs/
