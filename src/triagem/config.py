@@ -56,8 +56,7 @@ class ConfiguracaoMLflow(BaseSettings):
 
 
 def aplicar_credenciais_mlflow() -> bool:
-    """Copia as credenciais do `.env` para `os.environ` e diz se o rastreamento está configurado.
-    """
+    """Copia as credenciais do `.env` para `os.environ` e diz se o rastreamento está configurado."""
     cfg = ConfiguracaoMLflow()
     for nome, valor in {
         "MLFLOW_TRACKING_URI": cfg.tracking_uri,
