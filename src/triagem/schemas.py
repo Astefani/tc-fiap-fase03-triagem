@@ -1,4 +1,4 @@
-"""Contratos de entrada e saída da API. Entrada fora do contrato vira erro 422, antes de chegar ao modelo.
+"""Contratos de entrada e saída da API. Entrada fora do contrato vira 422, sem chegar ao modelo.
 
 Limites do texto definidos a partir da EDA:
 Os resumos têm de 170 a 4.000 caracteres (mediana 1.210).
