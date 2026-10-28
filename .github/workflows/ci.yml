@@ -18,27 +18,30 @@ concurrency:
 permissions:
   contents: read
 
+# ubuntu-24.04 fixo (e não ubuntu-latest, que está migrando para o 26): o ambiente do CI não muda
+# sozinho na véspera da entrega.
+
 env:
   PYTHON_VERSION: "3.12"
   POETRY_VERSION: "2.4.1"
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Só o ruff, na mesma versão do poetry.lock: não precisa instalar o projeto para checar estilo
       - run: pipx run ruff==0.17.1 check src tests scripts
       - run: pipx run ruff==0.17.1 format --check src tests scripts
 
   test:
     needs: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: pipx install "poetry==${POETRY_VERSION}"
       # cache: poetry guarda os pacotes baixados entre execuções (chave = hash do poetry.lock)
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -48,14 +51,14 @@ jobs:
 
   build:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       RAW: /tmp/ci/raw
       MODELOS: /tmp/ci/models
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: pipx install "poetry==${POETRY_VERSION}"
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
