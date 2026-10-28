@@ -1,0 +1,100 @@
+# CI: lint → test → build. Cada job roda numa máquina limpa e só começa se o anterior passou.
+# Nada aqui usa DVC, credencial ou o grupo `train`: os testes e o smoke usam a amostra versionada
+# (tests/data/sample.csv) e um modelo TF-IDF minúsculo treinado na hora.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Um push novo na mesma branch cancela a execução anterior, que ficou obsoleta
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  POETRY_VERSION: "2.4.1"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Só o ruff, na mesma versão do poetry.lock: não precisa instalar o projeto para checar estilo
+      - run: pipx run ruff==0.17.1 check src tests scripts
+      - run: pipx run ruff==0.17.1 format --check src tests scripts
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pipx install "poetry==${POETRY_VERSION}"
+      # cache: poetry guarda os pacotes baixados entre execuções (chave = hash do poetry.lock)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+      # main + dev; os grupos opcionais (train, rastreamento) ficam de fora
+      - run: poetry install --no-interaction
+      - run: poetry run pytest
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      RAW: /tmp/ci/raw
+      MODELOS: /tmp/ci/models
+    steps:
+      - uses: actions/checkout@v4
+      - run: pipx install "poetry==${POETRY_VERSION}"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+      - run: poetry install --no-interaction
+
+      - name: Build da imagem
+        run: docker build -f docker/Dockerfile -t triagem-api .
+
+      # O dataset real fica no DVC; para o smoke basta a amostra no lugar do treino
+      - name: Modelo minúsculo para o smoke
+        run: |
+          mkdir -p "$RAW"
+          cp tests/data/sample.csv "$RAW/medical_tc_train.csv"
+          cat > "$RAW/medical_tc_labels.csv" <<'EOF'
+          condition_label,condition_name
+          1,neoplasms
+          2,digestive system diseases
+          3,nervous system diseases
+          4,cardiovascular diseases
+          5,general pathological conditions
+          EOF
+          TRIAGEM_DIR_RAW="$RAW" TRIAGEM_DIR_MODELOS="$MODELOS" poetry run python -m triagem.train retreinar
+
+      - name: Smoke test do container
+        run: |
+          docker run -d --name api -p 8000:8000 \
+            -e TRIAGEM_MODEL_BACKEND=tfidf-logreg \
+            -v "$MODELOS:/app/models:ro" triagem-api
+          for i in $(seq 1 30); do curl -sf localhost:8000/ready && break; sleep 1; done
+          curl -sf localhost:8000/health
+          curl -sf localhost:8000/ready
+          curl -sf -X POST localhost:8000/predict -H 'content-type: application/json' \
+            -d '{"texto": "Malignant melanoma metastatic to the liver treated with chemotherapy."}' \
+            | tee resposta.json
+          python -c "import json; r = json.load(open('resposta.json')); assert r['classe_id'] in range(1, 6), r"
+          # entrada inválida tem que ser barrada pela API (422), não chegar ao modelo
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST localhost:8000/predict \
+            -H 'content-type: application/json' -d '{"texto": "curto"}')" = 422
+
+      - name: Logs do container (se algo falhou)
+        if: failure()
+        run: docker logs api || true
