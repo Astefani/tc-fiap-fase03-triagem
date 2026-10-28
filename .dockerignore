@@ -1,0 +1,33 @@
+# A imagem só precisa de pyproject.toml, poetry.lock e src/.
+
+# Ambiente local
+.venv/
+
+# Git e DVC
+.git/
+.dvc/
+*.dvc
+
+# Dados e modelos (o modelo entra por volume)
+data/
+models/
+
+# Segredos
+.env
+.env.*
+
+# Fora do serviço
+diversos/
+docs/
+notebooks/
+tests/
+scripts/
+docker/
+
+# Caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.DS_Store
