@@ -1,0 +1,32 @@
+# Airflow para a DAG de retreino do TF-IDF, em modo standalone.
+#
+# Dois ambientes Python na mesma imagem para evitar conflito entre eles:
+# 1 - Para o Airflow
+# 2 - /opt/triagem/venv, com o pacote triagem nas versões exatas do poetry.lock. As tasks da DAG rodam nele
+
+FROM apache/airflow:3.2.2-python3.12
+
+ENV PROJETO=/opt/triagem/projeto \
+    VENV=/opt/triagem/venv \
+    POETRY=/opt/triagem/poetry
+
+USER root
+RUN mkdir -p "$PROJETO" && chown -R airflow:0 /opt/triagem
+USER airflow
+
+# O Poetry fica num venv próprio e descartável.
+# VIRTUAL_ENV faz o Poetry instalar no venv do projeto em vez de criar um.
+COPY --chown=airflow:0 pyproject.toml poetry.lock /opt/triagem/projeto/
+RUN python -m venv "$POETRY" \
+ && "$POETRY/bin/pip" install --no-cache-dir "poetry==2.4.1" \
+ && python -m venv "$VENV" \
+ && cd "$PROJETO" \
+ && VIRTUAL_ENV="$VENV" "$POETRY/bin/poetry" install --only main,rastreamento --no-root \
+ && rm -rf /home/airflow/.cache
+
+# Pacote em modo editável: o compose monta o src/ do host por cima deste, e uma mudança no código
+# vale na próxima execução da task, sem rebuild.
+COPY --chown=airflow:0 src/ /opt/triagem/projeto/src/
+RUN cd "$PROJETO" \
+ && VIRTUAL_ENV="$VENV" "$POETRY/bin/poetry" install --only main,rastreamento \
+ && rm -rf "$POETRY" /home/airflow/.cache
