@@ -1,6 +1,6 @@
 # CI: lint → test → build. Cada job roda numa máquina limpa e só começa se o anterior passou.
-# Nada aqui usa DVC, credencial ou o grupo `train`: os testes e o smoke usam a amostra versionada
-# (tests/data/sample.csv) e um modelo TF-IDF minúsculo treinado na hora.
+# Não usa DVC, credencial ou o grupo 'train'.
+# Os testes e o smoke usam a amostra versionada (tests/data/sample.csv) e um modelo TF-IDF treinado na hora.
 
 name: CI
 
@@ -18,8 +18,7 @@ concurrency:
 permissions:
   contents: read
 
-# ubuntu-24.04 fixo (e não ubuntu-latest, que está migrando para o 26): o ambiente do CI não muda
-# sozinho na véspera da entrega.
+# ubuntu-24.04 fixo 
 
 env:
   PYTHON_VERSION: "3.12"
@@ -30,9 +29,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      # Só o ruff, na mesma versão do poetry.lock: não precisa instalar o projeto para checar estilo
-      - run: pipx run ruff==0.17.1 check src tests scripts
-      - run: pipx run ruff==0.17.1 format --check src tests scripts
+      - run: pipx run ruff==0.17.1 check src tests scripts airflow
+      - run: pipx run ruff==0.17.1 format --check src tests scripts airflow
 
   test:
     needs: lint
