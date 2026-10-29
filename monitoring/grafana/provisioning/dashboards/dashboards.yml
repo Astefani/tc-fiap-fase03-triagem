@@ -1,0 +1,11 @@
+# Diz ao Grafana para carregar os dashboards (JSON) desta pasta na subida.
+apiVersion: 1
+
+providers:
+  - name: triagem
+    folder: Triagem
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

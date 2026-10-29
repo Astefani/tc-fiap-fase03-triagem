@@ -1,0 +1,11 @@
+# Busca as métricas da API em api:8000/metrics a cada 15 segundos.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: triagem-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]

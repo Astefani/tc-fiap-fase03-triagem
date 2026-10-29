@@ -1,0 +1,86 @@
+# Stack local da triagem.
+#
+#   docker compose up -d                     → api + prometheus + grafana (monitoramento)
+#   docker compose --profile airflow up -d   → + airflow (retreino do TF-IDF)
+#
+# Portas:
+#  API 8000 (/docs)
+#  Prometheus 9090
+#  Grafana 3000
+#  Airflow 8080
+# Login desligado no Grafana e no Airflow. pois é local e para demonstração.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: triagem-api
+    ports:
+      - "8000:8000"
+    environment:
+      TRIAGEM_MODEL_BACKEND: ${TRIAGEM_MODEL_BACKEND:-bert-onnx-int8}
+    volumes:
+      - ./models:/app/models:ro
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:13.2.4
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
+  airflow:
+    profiles: [airflow]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.airflow
+    image: triagem-airflow
+    command: standalone
+    user: "${AIRFLOW_UID:-50000}:0"
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      AIRFLOW__DAG_PROCESSOR__REFRESH_INTERVAL: "30"
+      PYTHONDONTWRITEBYTECODE: "1"
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
+      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME:-}
+      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD:-}
+    volumes:
+      - airflow-home:/opt/airflow
+      - ./airflow/dags:/opt/airflow/dags:ro
+      - ./src:/opt/triagem/projeto/src:ro
+      - ./data:/opt/triagem/projeto/data:ro
+      - ./models:/opt/triagem/projeto/models
+      - ./.git:/opt/triagem/projeto/.git:ro
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+
+volumes:
+  airflow-home:
