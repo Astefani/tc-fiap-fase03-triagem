@@ -20,6 +20,7 @@ services:
       - "8000:8000"
     environment:
       TRIAGEM_MODEL_BACKEND: ${TRIAGEM_MODEL_BACKEND:-bert-onnx-int8}
+      TRIAGEM_ONNX_THREADS: ${TRIAGEM_ONNX_THREADS:-4}
     volumes:
       - ./models:/app/models:ro
 
