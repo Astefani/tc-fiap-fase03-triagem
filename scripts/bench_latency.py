@@ -10,8 +10,14 @@ Backends do modo inprocess:
   'models/bert-trabalho/hf', que só existe na máquina de treino.
 
 Protocolo: textos únicos da validação (split do projeto), warmup, N chamadas sequenciais e threads
-fixas (TRIAGEM_ONNX_THREADS, também aplicado ao PyTorch). No modo inprocess, os backends são
-chamados intercalados, texto a texto: uma variação momentânea da máquina afeta todos igualmente.
+fixas (TRIAGEM_ONNX_THREADS, também aplicado ao PyTorch). No modo inprocess, os backends são medidos
+**em blocos**, um de cada vez, com uma pausa entre eles.
+
+Por que não intercalar (lição de 29/10): PyTorch e ONNX Runtime mantêm cada um seu grupo de threads,
+que continua girando em espera ativa por alguns milissegundos depois de cada inferência. Chamando os
+backends texto a texto, a inferência seguinte começa com as threads da anterior ainda ocupando os
+núcleos — com a CPU fixada em 4 núcleos, o INT8 chegou a sair mais lento que o fp32. `--intercalar`
+continua disponível para backends sem paralelismo interno (é o que o gate faz com o TF-IDF).
 
 Saída: tabela no terminal e um JSON em 'docs/latencia/' com máquina, versões, parâmetros e o commit
 do código. O 'docs/latencia.md' é escrito a partir desses arquivos.
@@ -19,6 +25,7 @@ do código. O 'docs/latencia.md' é escrito a partir desses arquivos.
 Uso:
     python scripts/bench_latency.py inprocess
     python scripts/bench_latency.py inprocess --backends bert-pytorch bert-onnx bert-onnx-int8
+    taskset -c 0,2,4,6 python scripts/bench_latency.py inprocess --rotulo pcores   # núcleos fixos
     python scripts/bench_latency.py http --url http://localhost:8000 --rotulo cpus2
 """
 
@@ -65,6 +72,29 @@ def estatisticas(tempos_ms: list[float]) -> dict[str, float]:
         "req_por_s": float(1000 / tempos.mean()),
         "n": len(tempos),
     }
+
+
+PAUSA_ENTRE_BLOCOS_S = 2.0  # tempo para as threads do backend anterior pararem de girar
+
+
+def medir_em_blocos(
+    funcoes: dict[str, Callable[[str], object]], textos: list[str], n: int, warmup: int
+) -> dict[str, dict[str, float]]:
+    """Um backend de cada vez: warmup + N chamadas, pausa, próximo backend."""
+    textos = list(islice(cycle(textos), warmup + n))
+    resultados = {}
+    for i, (nome, prever) in enumerate(funcoes.items()):
+        if i:
+            time.sleep(PAUSA_ENTRE_BLOCOS_S)
+        for texto in textos[:warmup]:
+            prever(texto)
+        tempos = []
+        for texto in textos[warmup:]:
+            inicio = time.perf_counter()
+            prever(texto)
+            tempos.append((time.perf_counter() - inicio) * 1000)
+        resultados[nome] = estatisticas(tempos)
+    return resultados
 
 
 def medir_intercalado(
@@ -138,14 +168,17 @@ def preparar_servido(backend: str) -> tuple[Callable[[str], object], dict]:
     }
 
 
-def modo_inprocess(backends: list[str], textos: list[str], n: int, warmup: int) -> dict:
+def modo_inprocess(
+    backends: list[str], textos: list[str], n: int, warmup: int, intercalar: bool
+) -> dict:
     funcoes, info = {}, {}
     for backend in backends:
         if backend == "bert-pytorch":
             funcoes[backend], info[backend] = preparar_pytorch(CONFIG.onnx_threads)
         else:
             funcoes[backend], info[backend] = preparar_servido(backend)
-    medidas = medir_intercalado(funcoes, textos, n, warmup)
+    medir = medir_intercalado if intercalar else medir_em_blocos
+    medidas = medir(funcoes, textos, n, warmup)
     return {b: {**medidas[b], **info[b]} for b in backends}
 
 
@@ -160,7 +193,7 @@ def modo_http(url: str, textos: list[str], n: int, warmup: int) -> dict:
         def prever(texto: str) -> None:
             cliente.post("/predict", json={"texto": texto}).raise_for_status()
 
-        medidas = medir_intercalado({backend: prever}, textos, n, warmup)
+        medidas = medir_em_blocos({backend: prever}, textos, n, warmup)
     return {backend: {**medidas[backend], "versao_modelo": pronto.json()["versao_modelo"]}}
 
 
@@ -209,13 +242,14 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--url", default="http://localhost:8000")
     parser.add_argument("-n", type=int, default=1000, help="chamadas medidas por backend")
     parser.add_argument("--warmup", type=int, default=50)
-    parser.add_argument("--rotulo", default="", help="sufixo do arquivo (ex.: cpus2)")
+    parser.add_argument("--intercalar", action="store_true", help="inprocess: texto a texto")
+    parser.add_argument("--rotulo", default="", help="sufixo do arquivo (ex.: pcores)")
     parser.add_argument("--sem-salvar", action="store_true")
     args = parser.parse_args(argv)
 
     textos = textos_de_validacao()
     if args.modo == "inprocess":
-        resultados = modo_inprocess(args.backends, textos, args.n, args.warmup)
+        resultados = modo_inprocess(args.backends, textos, args.n, args.warmup, args.intercalar)
     else:
         resultados = modo_http(args.url, textos, args.n, args.warmup)
     imprimir(resultados)
@@ -230,6 +264,10 @@ def main(argv: list[str] | None = None) -> None:
             "n": args.n,
             "warmup": args.warmup,
             "threads": CONFIG.onnx_threads,
+            "ordem": "intercalada" if args.intercalar else "blocos",
+            "afinidade_cpu": sorted(os.sched_getaffinity(0))
+            if hasattr(os, "sched_getaffinity")
+            else None,
             "textos_unicos": len(textos),
             "url": args.url if args.modo == "http" else None,
             "rotulo": args.rotulo or None,
