@@ -79,3 +79,40 @@ def test_raiz_redireciona_para_a_documentacao(cliente):
     resposta = cliente.get("/", follow_redirects=False)
     assert resposta.status_code == 307
     assert resposta.headers["location"] == "/docs"
+
+
+def _valor(cliente, amostra: str) -> float:
+    """Valor de uma linha do /metrics (0 se a série ainda não existe)."""
+    for linha in cliente.get("/metrics").text.splitlines():
+        if linha.startswith(amostra + " "):
+            return float(linha.rsplit(" ", 1)[1])
+    return 0.0
+
+
+def test_metrics_conta_predicoes_e_requisicoes(cliente, classes):
+    predicao = f'triagem_predicoes_total{{backend="bert-onnx-int8",classe="{classes[3]}"}}'
+    ok = 'triagem_requisicoes_total{endpoint="/predict",metodo="POST",status="200"}'
+    invalida = 'triagem_requisicoes_total{endpoint="/predict",metodo="POST",status="422"}'
+    antes = {s: _valor(cliente, s) for s in (predicao, ok, invalida)}
+
+    cliente.post("/predict", json={"texto": TEXTO})
+    cliente.post("/predict", json={"texto": "curto"})
+
+    assert _valor(cliente, predicao) == antes[predicao] + 1
+    assert _valor(cliente, ok) == antes[ok] + 1
+    assert _valor(cliente, invalida) == antes[invalida] + 1
+
+
+def test_metrics_expoe_modelo_e_nao_conta_a_si_mesmo(cliente):
+    texto = cliente.get("/metrics").text
+    assert "triagem_modelo_carregado 1.0" in texto
+    assert 'triagem_modelo_info{backend="bert-onnx-int8"' in texto
+    assert 'endpoint="/metrics"' not in texto
+    assert "Cancer" not in texto  # nada do texto do laudo
+
+
+def test_caminho_inexistente_nao_cria_serie_nova(cliente):
+    cliente.get("/qualquer/coisa/123")
+    texto = cliente.get("/metrics").text
+    assert "/qualquer" not in texto
+    assert 'endpoint="outro",metodo="GET",status="404"' in texto
