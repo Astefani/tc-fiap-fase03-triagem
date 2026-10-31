@@ -19,6 +19,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 
 from triagem.config import CONFIG, Configuracao
+from triagem.data import COLUNA_ROTULO, COLUNA_TEXTO, conjuntos_de_rotulos, normalizar_texto
 
 
 def acerto_por_resumo(textos_norm: pd.Series, previsto, conjuntos: pd.Series) -> float:
@@ -40,6 +41,38 @@ def calcular_metricas(
     if textos_norm is not None and conjuntos is not None:
         metricas["acerto_por_resumo"] = acerto_por_resumo(textos_norm, previsto, conjuntos)
     return metricas
+
+
+def metricas_no_teste(teste: pd.DataFrame, previsto, treino: pd.DataFrame) -> dict[str, dict]:
+    """Métricas no teste oficial, separando os textos que já apareceram no treino.
+
+    No dataset, 35% das linhas do teste têm um texto que está no treino, com outro rótulo.
+    Então, um modelo que memorizou o treino tende a prever o rótulo que viu e erra a linha.
+    Por isso o resultado vem em três partes: total, texto novo e texto visto no treino.
+    No acerto por resumo, as condições de cada resumo juntam treino e teste, então
+    prever a condição que estava no treino é acertar uma condição verdadeira daquele resumo.
+    """
+    textos_norm = normalizar_texto(teste[COLUNA_TEXTO]).reset_index(drop=True)
+    conjuntos = conjuntos_de_rotulos(pd.concat([treino, teste], ignore_index=True))
+    visto = textos_norm.isin(set(normalizar_texto(treino[COLUNA_TEXTO]))).to_numpy()
+    real = teste[COLUNA_ROTULO].to_numpy()
+    previsto = np.asarray(previsto)
+
+    resultado = {}
+    partes = (
+        ("total", np.ones_like(visto)),
+        ("texto_novo", ~visto),
+        ("texto_visto_no_treino", visto),
+    )
+    for nome, mascara in partes:
+        linhas = int(mascara.sum())
+        metricas = (
+            calcular_metricas(real[mascara], previsto[mascara], textos_norm[mascara], conjuntos)
+            if linhas
+            else {}
+        )
+        resultado[nome] = {**metricas, "linhas": linhas}
+    return resultado
 
 
 def _em_ciclo(textos: list[str], total: int) -> list[str]:
