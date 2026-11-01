@@ -1,0 +1,84 @@
+{
+  "criado_em": "2026-10-30T01:56:50+00:00",
+  "modo": "inprocess",
+  "parametros": {
+    "n": 1000,
+    "warmup": 50,
+    "threads": 4,
+    "ordem": "blocos",
+    "afinidade_cpu": [
+      0,
+      2,
+      4,
+      6
+    ],
+    "textos_unicos": 947,
+    "url": null,
+    "rotulo": "pcores"
+  },
+  "ambiente": {
+    "sistema": "Linux-7.0.0-38-generic-x86_64-desconhecido-with-glibc2.43",
+    "arquitetura": "x86_64",
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12600K",
+    "nucleos": 16,
+    "python": "3.12.12",
+    "onnxruntime": "1.31.0",
+    "scikit-learn": "1.9.1",
+    "tokenizers": "0.23.3",
+    "codigo": {
+      "commit": "ee349c6def46790903d24320e551ab085b0cb228",
+      "src_igual_ao_commit": true,
+      "origem": "hook"
+    }
+  },
+  "resultados": {
+    "tfidf-logreg": {
+      "p50_ms": 0.539603000106581,
+      "p95_ms": 0.6324871500964946,
+      "p99_ms": 0.6652342102188413,
+      "media_ms": 0.5429722669914554,
+      "max_ms": 0.7107699993866845,
+      "req_por_s": 1841.7146892987384,
+      "n": 1000,
+      "tamanho_mb": 4.0,
+      "f1_macro": 0.6648640302642956,
+      "versao_modelo": "tfidf-logreg@2026-10-27T15:28:17+00:00 (c3b7f1ff+mod)"
+    },
+    "bert-pytorch": {
+      "p50_ms": 90.61963199974343,
+      "p95_ms": 103.88128650006365,
+      "p99_ms": 104.11578367981747,
+      "media_ms": 83.02254951499434,
+      "max_ms": 104.9299449996397,
+      "req_por_s": 12.044920396227948,
+      "n": 1000,
+      "tamanho_mb": 417.7,
+      "f1_macro": 0.6950235267275664,
+      "torch": "2.7.1+cu128"
+    },
+    "bert-onnx": {
+      "p50_ms": 83.78405400026168,
+      "p95_ms": 97.0715812994058,
+      "p99_ms": 97.23377144054211,
+      "media_ms": 75.9879039149864,
+      "max_ms": 97.88736299924494,
+      "req_por_s": 13.159989267749483,
+      "n": 1000,
+      "tamanho_mb": 417.8,
+      "f1_macro": 0.6966657637580627,
+      "versao_modelo": "bert-onnx@2026-10-27T21:47:52+00:00 (9526abfd)"
+    },
+    "bert-onnx-int8": {
+      "p50_ms": 33.66478050020305,
+      "p95_ms": 39.09745264963931,
+      "p99_ms": 39.228653790014505,
+      "media_ms": 30.551552714005993,
+      "max_ms": 39.53604499929497,
+      "req_por_s": 32.73156063002853,
+      "n": 1000,
+      "tamanho_mb": 105.1,
+      "f1_macro": 0.691793349569453,
+      "versao_modelo": "bert-onnx@2026-10-27T21:47:52+00:00 (9526abfd)"
+    }
+  }
+}

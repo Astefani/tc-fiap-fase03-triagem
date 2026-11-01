@@ -1,0 +1,39 @@
+{
+  "criado_em": "2026-10-30T01:42:47+00:00",
+  "modo": "http",
+  "parametros": {
+    "n": 1000,
+    "warmup": 50,
+    "threads": 4,
+    "textos_unicos": 947,
+    "url": "http://localhost:8000",
+    "rotulo": "bert-onnx-int8_pcores"
+  },
+  "ambiente": {
+    "sistema": "Linux-7.0.0-38-generic-x86_64-desconhecido-with-glibc2.43",
+    "arquitetura": "x86_64",
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12600K",
+    "nucleos": 16,
+    "python": "3.12.12",
+    "onnxruntime": "1.31.0",
+    "scikit-learn": "1.9.1",
+    "tokenizers": "0.23.3",
+    "codigo": {
+      "commit": "448aab966cd18f995eff184feee38ec91a785c31",
+      "src_igual_ao_commit": true,
+      "origem": "hook"
+    }
+  },
+  "resultados": {
+    "bert-onnx-int8": {
+      "p50_ms": 34.85960650004927,
+      "p95_ms": 40.365008650087475,
+      "p99_ms": 40.85423099023501,
+      "media_ms": 31.82272624599591,
+      "max_ms": 77.97741099966515,
+      "req_por_s": 31.424083287830342,
+      "n": 1000,
+      "versao_modelo": "bert-onnx@2026-10-27T21:47:52+00:00 (9526abfd)"
+    }
+  }
+}

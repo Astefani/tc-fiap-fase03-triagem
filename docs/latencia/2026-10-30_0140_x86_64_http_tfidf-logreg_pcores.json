@@ -1,0 +1,39 @@
+{
+  "criado_em": "2026-10-30T01:40:39+00:00",
+  "modo": "http",
+  "parametros": {
+    "n": 1000,
+    "warmup": 50,
+    "threads": 4,
+    "textos_unicos": 947,
+    "url": "http://localhost:8000",
+    "rotulo": "tfidf-logreg_pcores"
+  },
+  "ambiente": {
+    "sistema": "Linux-7.0.0-38-generic-x86_64-desconhecido-with-glibc2.43",
+    "arquitetura": "x86_64",
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12600K",
+    "nucleos": 16,
+    "python": "3.12.12",
+    "onnxruntime": "1.31.0",
+    "scikit-learn": "1.9.1",
+    "tokenizers": "0.23.3",
+    "codigo": {
+      "commit": "448aab966cd18f995eff184feee38ec91a785c31",
+      "src_igual_ao_commit": true,
+      "origem": "hook"
+    }
+  },
+  "resultados": {
+    "tfidf-logreg": {
+      "p50_ms": 1.3514279999071732,
+      "p95_ms": 4.348343449555613,
+      "p99_ms": 5.602632329946573,
+      "media_ms": 1.7959697940104888,
+      "max_ms": 24.194067000280484,
+      "req_por_s": 556.8022376183459,
+      "n": 1000,
+      "versao_modelo": "tfidf-logreg@2026-10-27T15:28:17+00:00 (c3b7f1ff+mod)"
+    }
+  }
+}
