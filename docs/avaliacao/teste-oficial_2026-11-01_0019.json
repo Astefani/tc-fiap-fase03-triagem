@@ -1,0 +1,103 @@
+{
+  "criado_em": "2026-11-01T00:19:35+00:00",
+  "arquivo_teste": "data/raw/medical_tc_test.csv",
+  "linhas_teste": 2888,
+  "dados_md5": "1b6b336d5817fc8667491669fe53fbb7.dir",
+  "codigo": {
+    "commit": "6e90a74ab7127fce45785e3f8b63b935bfc9f88c",
+    "src_igual_ao_commit": true,
+    "origem": "hook"
+  },
+  "resultados": {
+    "tfidf-logreg": {
+      "total": {
+        "f1_macro": 0.5615700006217583,
+        "acuracia": 0.5619806094182825,
+        "acerto_por_resumo": 0.8779783393501805,
+        "linhas": 2888
+      },
+      "texto_novo": {
+        "f1_macro": 0.7766767313088996,
+        "acuracia": 0.7763578274760383,
+        "acerto_por_resumo": 0.8181818181818182,
+        "linhas": 1878
+      },
+      "texto_visto_no_treino": {
+        "f1_macro": 0.18090502533058234,
+        "acuracia": 0.16336633663366337,
+        "acerto_por_resumo": 0.9858299595141701,
+        "linhas": 1010
+      },
+      "f1_por_classe": {
+        "neoplasms": 0.6935975609756098,
+        "digestive system diseases": 0.4917043740573152,
+        "nervous system diseases": 0.5450121654501217,
+        "cardiovascular diseases": 0.6465116279069767,
+        "general pathological conditions": 0.43102427471876853
+      },
+      "f1_validacao": 0.6648640302642956,
+      "versao_modelo": "tfidf-logreg@2026-10-27T15:28:17+00:00 (c3b7f1ff+mod)",
+      "segundos": 1.6
+    },
+    "bert-onnx": {
+      "total": {
+        "f1_macro": 0.643293613360746,
+        "acuracia": 0.6450831024930748,
+        "acerto_por_resumo": 0.9007220216606499,
+        "linhas": 2888
+      },
+      "texto_novo": {
+        "f1_macro": 0.8102622037111725,
+        "acuracia": 0.8146964856230032,
+        "acerto_por_resumo": 0.8585858585858586,
+        "linhas": 1878
+      },
+      "texto_visto_no_treino": {
+        "f1_macro": 0.34870318099262887,
+        "acuracia": 0.3297029702970297,
+        "acerto_por_resumo": 0.9767206477732794,
+        "linhas": 1010
+      },
+      "f1_por_classe": {
+        "neoplasms": 0.7529239766081871,
+        "digestive system diseases": 0.5856515373352855,
+        "nervous system diseases": 0.6381418092909535,
+        "cardiovascular diseases": 0.744220730797912,
+        "general pathological conditions": 0.4955300127713921
+      },
+      "f1_validacao": 0.6966657637580627,
+      "versao_modelo": "bert-onnx@2026-10-27T21:47:52+00:00 (9526abfd)",
+      "segundos": 210.4
+    },
+    "bert-onnx-int8": {
+      "total": {
+        "f1_macro": 0.6472510272370957,
+        "acuracia": 0.6492382271468145,
+        "acerto_por_resumo": 0.9014440433212997,
+        "linhas": 2888
+      },
+      "texto_novo": {
+        "f1_macro": 0.8127002319886456,
+        "acuracia": 0.8168264110756124,
+        "acerto_por_resumo": 0.8608305274971941,
+        "linhas": 1878
+      },
+      "texto_visto_no_treino": {
+        "f1_macro": 0.35568074659035653,
+        "acuracia": 0.33762376237623765,
+        "acerto_por_resumo": 0.9746963562753036,
+        "linhas": 1010
+      },
+      "f1_por_classe": {
+        "neoplasms": 0.7591240875912408,
+        "digestive system diseases": 0.5944363103953147,
+        "nervous system diseases": 0.6353522867737948,
+        "cardiovascular diseases": 0.7492581602373887,
+        "general pathological conditions": 0.49808429118773945
+      },
+      "f1_validacao": 0.691793349569453,
+      "versao_modelo": "bert-onnx@2026-10-27T21:47:52+00:00 (9526abfd)",
+      "segundos": 85.3
+    }
+  }
+}
